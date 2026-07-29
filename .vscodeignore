@@ -1,0 +1,8 @@
+.vscode/**
+.vscode-test/**
+src/**
+tsconfig.json
+PUBLISHING_GUIDE.md
+*.vsix
+.git/**
+.gitignore

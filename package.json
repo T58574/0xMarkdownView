@@ -1,0 +1,99 @@
+{
+  "name": "markdown-notion-view",
+  "displayName": "Notion Markdown Preview",
+  "description": "Красивый предпросмотр Markdown в стиле Notion с авто-обновлением, Callout-блоками, KaTeX математикой, Mermaid диаграммами и плавающим Содержанием.",
+  "version": "1.0.2",
+  "publisher": "antigravity",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Formatters",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "notion",
+    "preview",
+    "katex",
+    "mermaid",
+    "callout",
+    "toc"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/markdown-notion-view"
+  },
+  "activationEvents": [
+    "onLanguage:markdown",
+    "onCommand:markdown-notion-view.openPreview",
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "markdown-notion-view.openPreview",
+        "title": "Просмотр Md",
+        "category": "Notion Preview",
+        "icon": "$(eye)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "markdown-notion-view.openPreview",
+          "when": "editorLangId == markdown || resourceExtname == .md",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "markdown-notion-view.openPreview",
+          "when": "resourceExtname == .md",
+          "group": "1_open"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "markdown-notion-view.openPreview",
+          "when": "editorLangId == markdown || resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "markdown-notion-view.openPreview",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "markdown-notion-view.openPreview",
+          "when": "editorLangId == markdown || resourceExtname == .md"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "npx --no-install tsc -p ./",
+    "watch": "npx --no-install tsc -watch -p ./",
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^13.0.7",
+    "@types/node": "^18.19.0",
+    "@types/vscode": "^1.75.0",
+    "@vscode/vsce": "^2.32.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.0.1",
+    "markdown-it-container": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1"
+  }
+}
