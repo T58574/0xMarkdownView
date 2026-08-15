@@ -3,7 +3,7 @@
   "displayName": "Notion Markdown Preview",
   "description": "Красивый предпросмотр Markdown в стиле Notion с авто-обновлением, Callout-блоками, KaTeX математикой, Mermaid диаграммами и плавающим Содержанием.",
   "version": "1.0.2",
-  "publisher": "antigravity",
+  "publisher": "T58",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -23,7 +23,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/markdown-notion-view"
+    "url": "https://github.com/T58574/0xMarkdownView"
   },
   "activationEvents": [
     "onLanguage:markdown",
