@@ -26,6 +26,7 @@ export class NotionMarkdownEngine {
     });
 
     this.setupPlugins();
+    this.setupLineTracking();
     this.setupCustomRenderers();
   }
 
@@ -47,7 +48,7 @@ export class NotionMarkdownEngine {
         s
           .toLowerCase()
           .trim()
-          .replace(/[^\w\s-]/g, '')
+          .replace(/[^\w\sа-яё-]/gi, '')
           .replace(/[\s_-]+/g, '-')
           .replace(/^-+|-+$/g, '') || 'heading',
     });
@@ -57,50 +58,36 @@ export class NotionMarkdownEngine {
     
     calloutTypes.forEach((type) => {
       this.md.use(markdownItContainer, type, {
-        validate: (params: string) => {
-          return params.trim().match(new RegExp(`^${type}\\s*(.*)$`));
-        },
+        validate: (params: string) => params.trim().match(new RegExp(`^${type}\\s*(.*)$`)),
         render: (tokens: any[], idx: number) => {
           const m = tokens[idx].info.trim().match(new RegExp(`^${type}\\s*(.*)$`));
 
           if (tokens[idx].nesting === 1) {
             const titleArg = m && m[1] ? m[1].trim() : '';
-
             if (type === 'toggle' || type === 'details') {
               const title = titleArg || 'Нажмите, чтобы развернуть';
               return `<details class="notion-toggle"><summary class="notion-toggle-summary">${this.md.utils.escapeHtml(title)}</summary><div class="notion-toggle-content">\n`;
             }
 
-            // Callout styling
-            let icon = '💡';
-            let title = titleArg;
-            let calloutClass = `notion-callout notion-callout-${type}`;
+            const iconMap: Record<string, string> = {
+              warning: '⚠️',
+              error: '🚨',
+              tip: '💡',
+              success: '✅',
+              info: 'ℹ️',
+              quote: '💬',
+            };
+            const defaultTitles: Record<string, string> = {
+              warning: 'Предупреждение',
+              error: 'Ошибка',
+              tip: 'Совет',
+              success: 'Успешно',
+              info: 'Информация',
+            };
 
-            switch (type) {
-              case 'warning':
-                icon = '⚠️';
-                if (!title) title = 'Предупреждение';
-                break;
-              case 'error':
-                icon = '🚨';
-                if (!title) title = ' Ошибка';
-                break;
-              case 'tip':
-              case 'success':
-                icon = '✅';
-                if (!title) title = 'Совет';
-                break;
-              case 'info':
-                icon = 'ℹ️';
-                if (!title) title = 'Информация';
-                break;
-              case 'quote':
-                icon = '💬';
-                break;
-              default:
-                icon = '💡';
-                break;
-            }
+            const icon = iconMap[type] || '💡';
+            const title = titleArg || defaultTitles[type] || '';
+            const calloutClass = `notion-callout notion-callout-${type}`;
 
             return `<div class="${calloutClass}">
               <div class="notion-callout-icon">${icon}</div>
@@ -118,27 +105,35 @@ export class NotionMarkdownEngine {
     });
   }
 
+  private setupLineTracking() {
+    // Inject data-line attributes on opening tokens to enable jump-to-source on double-click
+    this.md.core.ruler.push('track_lines', (state) => {
+      for (const token of state.tokens) {
+        if (token.map && token.nesting === 1) {
+          token.attrSet('data-line', String(token.map[0]));
+        }
+      }
+    });
+  }
+
   private setupCustomRenderers() {
-    // Custom Code Block Renderer with Language Label and Copy Button
-    const defaultFence = this.md.renderer.rules.fence!;
-    this.md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+    this.md.renderer.rules.fence = (tokens, idx) => {
       const token = tokens[idx];
       const lang = token.info.trim();
 
-      // Mermaid diagrams support
       if (lang === 'mermaid') {
-        return `<div class="mermaid">${token.content}</div>`;
+        return `<div class="mermaid" data-line="${token.map ? token.map[0] : 0}">${token.content}</div>`;
       }
 
-      // Math blocks (KaTeX)
       if (lang === 'math' || lang === 'katex' || lang === 'latex') {
-        return `<div class="katex-block">\\[${token.content.trim()}\\]</div>`;
+        return `<div class="katex-block" data-line="${token.map ? token.map[0] : 0}">\\[${token.content.trim()}\\]</div>`;
       }
 
       const escapedCode = this.md.utils.escapeHtml(token.content);
       const displayLang = lang || 'text';
+      const lineAttr = token.map ? ` data-line="${token.map[0]}"` : '';
 
-      return `<div class="notion-code-block">
+      return `<div class="notion-code-block"${lineAttr}>
         <div class="notion-code-header">
           <span class="notion-code-lang">${displayLang}</span>
           <button class="notion-code-copy-btn" onclick="copyCode(this)" title="Копировать код">
@@ -154,19 +149,46 @@ export class NotionMarkdownEngine {
     };
   }
 
+  private transformGitHubAlerts(text: string): string {
+    // Convert GitHub alert syntax (> [!NOTE], > [!TIP], > [!IMPORTANT], > [!WARNING], > [!CAUTION]) into containers
+    const alertMap: Record<string, string> = {
+      NOTE: 'note',
+      TIP: 'tip',
+      IMPORTANT: 'info',
+      WARNING: 'warning',
+      CAUTION: 'error',
+    };
+
+    return text.replace(
+      /(?:^|\n)> *\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][^\n]*\n((?:> *[^\n]*\n*)*)/gi,
+      (match, type, content) => {
+        const cType = alertMap[type.toUpperCase()] || 'note';
+        const cleanedContent = content.replace(/^> ?/gm, '').trim();
+        return `\n\n::: ${cType}\n${cleanedContent}\n:::\n\n`;
+      }
+    );
+  }
+
   public render(markdownText: string): RenderResult {
-    // Process math inline ($...$) and block ($$...$$) placeholders before rendering
-    let processedText = markdownText.replace(/\$\$\s*([\s\S]+?)\s*\$\$/g, (match, math) => {
-      return `<div class="katex-block">\\[${math}\\]</div>`;
+    let processedText = this.transformGitHubAlerts(markdownText);
+
+    // Block math: $$ ... $$
+    processedText = processedText.replace(/\$\$\s*([\s\S]+?)\s*\$\$/g, (_match, math) => {
+      return `<div class="katex-block">\\[${math.trim()}\\]</div>`;
     });
 
-    processedText = processedText.replace(/\$([^\$\n]+)\$/g, (match, math) => {
-      return `<span class="katex-inline">\\(${math}\\)</span>`;
+    // Inline math: $math$ (strictly non-empty, no leading/trailing space inside, not surrounded by letters/numbers)
+    processedText = processedText.replace(/(^|[\s(])\$([^\s$](?:[^$\n]*?[^\s$])?)\$([\s).,;:!?]|$)/g, (_match, prefix, math, suffix) => {
+      // Don't treat standalone numbers like $10 as math equations
+      if (/^\d+(?:\.\d+)?$/.test(math)) {
+        return `${prefix}$${math}$${suffix}`;
+      }
+      return `${prefix}<span class="katex-inline">\\(${math}\\)</span>${suffix}`;
     });
 
     const html = this.md.render(processedText);
 
-    // Generate TOC from headings
+    // Extract TOC
     const toc: TocItem[] = [];
     const headingRegex = /<h([1-3])[^>]*id="([^"]+)"[^>]*>(.*?)<\/h[1-3]>/gi;
     let match: RegExpExecArray | null;
@@ -175,7 +197,6 @@ export class NotionMarkdownEngine {
       const level = parseInt(match[1], 10);
       const id = match[2];
       const rawText = match[3].replace(/<[^>]+>/g, '').replace(/^#\s*/, '').trim();
-
       if (rawText) {
         toc.push({ id, text: rawText, level });
       }

@@ -28,16 +28,22 @@
   "activationEvents": [
     "onLanguage:markdown",
     "onCommand:markdown-notion-view.openPreview",
-    "*"
+    "onCommand:markdown-notion-view.openPreviewToSide"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "markdown-notion-view.openPreview",
-        "title": "Просмотр Md",
+        "title": "Notion: Открыть превью",
         "category": "Notion Preview",
-        "icon": "$(eye)"
+        "icon": "$(book)"
+      },
+      {
+        "command": "markdown-notion-view.openPreviewToSide",
+        "title": "Notion: Открыть превью сбоку (Split)",
+        "category": "Notion Preview",
+        "icon": "$(split-horizontal)"
       }
     ],
     "menus": {
@@ -46,11 +52,21 @@
           "command": "markdown-notion-view.openPreview",
           "when": "editorLangId == markdown || resourceExtname == .md",
           "group": "navigation@1"
+        },
+        {
+          "command": "markdown-notion-view.openPreviewToSide",
+          "when": "editorLangId == markdown || resourceExtname == .md",
+          "group": "navigation@2"
         }
       ],
       "editor/title/context": [
         {
           "command": "markdown-notion-view.openPreview",
+          "when": "resourceExtname == .md",
+          "group": "1_open"
+        },
+        {
+          "command": "markdown-notion-view.openPreviewToSide",
           "when": "resourceExtname == .md",
           "group": "1_open"
         }
@@ -60,6 +76,11 @@
           "command": "markdown-notion-view.openPreview",
           "when": "editorLangId == markdown || resourceExtname == .md",
           "group": "navigation"
+        },
+        {
+          "command": "markdown-notion-view.openPreviewToSide",
+          "when": "editorLangId == markdown || resourceExtname == .md",
+          "group": "navigation"
         }
       ],
       "explorer/context": [
@@ -67,11 +88,20 @@
           "command": "markdown-notion-view.openPreview",
           "when": "resourceExtname == .md",
           "group": "navigation"
+        },
+        {
+          "command": "markdown-notion-view.openPreviewToSide",
+          "when": "resourceExtname == .md",
+          "group": "navigation"
         }
       ],
       "commandPalette": [
         {
           "command": "markdown-notion-view.openPreview",
+          "when": "editorLangId == markdown || resourceExtname == .md"
+        },
+        {
+          "command": "markdown-notion-view.openPreviewToSide",
           "when": "editorLangId == markdown || resourceExtname == .md"
         }
       ]
