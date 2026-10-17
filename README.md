@@ -1,7 +1,11 @@
 # 📄 0xMarkdownView (Notion Markdown Preview) — VS Code Extension
 
+> [!WARNING]
+> **АРХИВ / ARCHIVED**: В свежих версиях VS Code появился встроенный нативный просмотрщик Markdown, поэтому проект заморожен и сохранён как архивный референс.
+
 <div align="center">
 
+[![Status: Archived](https://img.shields.io/badge/Status-ARCHIVED-red?style=flat-square)](https://github.com/T58574/0xMarkdownView)
 [![VS Code](https://img.shields.io/badge/VS_Code-Extension-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![KaTeX](https://img.shields.io/badge/Render-KaTeX_Math-3178C6?style=flat-square)](https://katex.org/)
